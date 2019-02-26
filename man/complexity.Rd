@@ -8,34 +8,37 @@
 \usage{
 complexity(...)
 
-\method{complexity}{default}(x, y, groups = "all", ...)
+\method{complexity}{default}(x, y, type, groups = "all", ...)
 
-\method{complexity}{formula}(formula, data, groups = "all", ...)
+\method{complexity}{formula}(formula, data, type, groups = "all", ...)
 }
 \arguments{
 \item{...}{Not used.}
 
 \item{x}{A data.frame contained only the input attributes.}
 
-\item{y}{A factor response vector with one label for each row/component of x.}
+\item{y}{A response vector with one value for each row/component of x.}
+
+\item{type}{The type of supervised problem: The \code{"class"} is used for 
+classification tasks and \code{"regr"} for regression tasks.}
 
 \item{groups}{A list of complexity measures groups or \code{"all"} to include
 all of them.}
 
-\item{formula}{A formula to define the class column.}
+\item{formula}{A formula to define the output column.}
 
-\item{data}{A data.frame dataset contained the input attributes and class.}
+\item{data}{A data.frame dataset contained the input and output attributes.}
 }
 \value{
 A numeric vector named by the requested complexity measures.
 }
 \description{
 This function is responsable to extract the complexity measures from the 
-datasets. For such, they take into account the overlap between classes 
-imposed by feature values, the separability and distribution of the data 
-points and the value of structural measures based on the representation of 
-the dataset as a graph structure. To set specific parameters for each group, 
-use the characterization function.
+classification and regression tasks. For such, they take into account the 
+overlap between classes imposed by feature values, the separability and 
+distribution of the data points and the value of structural measures based on
+the representation of the dataset as a graph structure. To set specific 
+parameters for each group, use the characterization function.
 }
 \details{
 The following groups are allowed for this method:
@@ -47,23 +50,30 @@ The following groups are allowed for this method:
      density of same or different classes in local neighborhoods. See 
      \link{neighborhood} for more details.}
    \item{"linearity"}{Linearity measures try to quantify whether the classes 
-     can be linearly separated. See \link{linearity} for more details.}
+     can be linearly separated. See \link{linearity.class} or 
+     \link{linearity.regr} for more details.}
    \item{"dimensionality"}{The dimensionality measures compute information on
-     how smoothly the examples are distributed within the classes. See 
+     how smoothly the examples are distributed within the attributes. See 
      \link{dimensionality} for more details.}
    \item{"balance"}{Class balance measures take into account the numbers of 
      examples per class in the dataset. See \link{balance} for more details.}
    \item{"network"}{Network measures represent the dataset as a graph and 
      extract structural information from it. See \link{network} for more 
      details.}
+   \item{"correlation"}{Capture the relationship of the feature values with 
+     the outputs. See \link{correlation} for more details.}
+   \item{"smoothness"}{Estimate the smoothness of the function that must be 
+     fitted to the data. See \link{smoothness} for more details.}
  }
 }
 \examples{
-## Extract all complexity measures
-complexity(Species ~ ., iris)
+## Extract all complexity measures for classification task
+data(iris)
+complexity(Species ~ ., iris, type="class")
 
-## Extract the linearity measures
-complexity(Species ~ ., iris, groups="linearity")
+## Extract all complexity measures for regression task
+data(cars)
+complexity(speed~., cars, type="regr")
 }
 \references{
 Tin K Ho and Mitra Basu. (2002). Complexity measures of supervised 
@@ -73,4 +83,8 @@ Tin K Ho and Mitra Basu. (2002). Complexity measures of supervised
  Albert Orriols-Puig, Nuria Macia and Tin K Ho. (2010). Documentation for 
    the data complexity library in C++. Technical Report. La Salle - 
    Universitat Ramon Llull.
+
+ Ana C Lorena and Aron I Maciel and Pericles B C Miranda and Ivan G Costa and
+   Ricardo B C Prudencio. (2018). Data complexity meta-features for 
+   regression problems. Machine Learning, 107, 1, 209--246.
 }

@@ -26,14 +26,13 @@ neighborhood(...)
 \item{data}{A data.frame dataset contained the input attributes and class.}
 }
 \value{
-A list named by the requested class neighborhood measure.
+A list named by the requested neighborhood measure.
 }
 \description{
-The Neighborhood measures analyze the neighborhoods of the data items and try
-to capture class overlapping and the shape of the decision boundary. They 
-work over a distance matrix storing the distances between all pairs of data 
-points in the dataset. To deal with both symbolic and numerical features, 
-we adopt a heterogeneous distance measure named Gower distance.
+Classification task. The Neighborhood measures analyze the neighborhoods of 
+the data items and try to capture class overlapping and the shape of the 
+decision boundary. They work over a distance matrix storing the distances 
+between all pairs of data points in the dataset.
 }
 \details{
 The following measures are allowed for this method:
@@ -61,14 +60,15 @@ The following measures are allowed for this method:
      are eliminated. T1 is finally defined as the ratio between the number of 
      the remaining hyperspheres and the total number of examples in the 
      dataset.}
-   \item{"LSCAvg"}{Local Set Average Cardinality (LSCAvg) is based on Local 
-     Set (LS) and defined as the set of points from the dataset whose 
-     distance of each example is smaller than the distance from the exemples 
-     of the different class. LSCAvg is the average of the LS.}
+   \item{"LSC"}{Local Set Average Cardinality (LSC) is based on Local Set 
+     (LS) and defined as the set of points from the dataset whose distance of
+     each example is smaller than the distance from the exemples of the 
+     different class. LSC is the average of the LS.}
  }
 }
 \examples{
 ## Extract all neighborhood measures
+data(iris)
 neighborhood(Species ~ ., iris)
 }
 \references{
@@ -82,6 +82,9 @@ Albert Orriols-Puig, Nuria Macia and Tin K Ho. (2010). Documentation for the
 }
 \seealso{
 Other complexity-measures: \code{\link{balance}},
-  \code{\link{dimensionality}}, \code{\link{linearity}},
-  \code{\link{network}}, \code{\link{overlapping}}
+  \code{\link{correlation}}, \code{\link{dimensionality}},
+  \code{\link{linearity.class}},
+  \code{\link{linearity.regr}}, \code{\link{network}},
+  \code{\link{overlapping}}, \code{\link{smoothness}}
 }
+\concept{complexity-measures}

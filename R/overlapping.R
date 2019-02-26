@@ -1,9 +1,9 @@
 #' Measures of overlapping
 #'
-#' The overlapping measures evaluate how informative the available features are
-#' to separate the classes. If there is at least one very discriminative feature
-#' in the dataset, the problem can be considered simpler than if there is no 
-#' such an attribute. 
+#' Classification task. The overlapping measures evaluate how informative the 
+#' available features are to separate the classes. If there is at least one very
+#' discriminative feature in the dataset, the problem can be considered simpler 
+#' than if there is no such an attribute. 
 #'
 #' @family complexity-measures
 #' @param x A data.frame contained only the input attributes.
@@ -38,7 +38,7 @@
 #'      features have been considered or no example remains. F4 returns the 
 #'      ratio of examples that have been discriminated.}
 #'  }
-#' @return A list named by the requested class overlapping measure.
+#' @return A list named by the requested overlapping measure.
 #'
 #' @references
 #'  Albert Orriols-Puig, Nuria Macia and Tin K Ho. (2010). Documentation for the
@@ -47,6 +47,7 @@
 #'
 #' @examples
 #' ## Extract all overlapping measures
+#' data(iris)
 #' overlapping(Species ~ ., iris)
 #' @export
 overlapping <- function(...) {
@@ -56,6 +57,7 @@ overlapping <- function(...) {
 #' @rdname overlapping
 #' @export
 overlapping.default <- function(x, y, measures="all", ...) {
+
   if(!is.data.frame(x)) {
     stop("data argument must be a data.frame")
   }
@@ -85,13 +87,14 @@ overlapping.default <- function(x, y, measures="all", ...) {
   data <- data.frame(x, class=y)
 
   sapply(measures, function(f) {
-    eval(call(f, data=data))
+    eval(call(paste("c", f, sep="."), data=data))
   })
 }
 
 #' @rdname overlapping
 #' @export
 overlapping.formula <- function(formula, data, measures="all", ...) {
+
   if(!inherits(formula, "formula")) {
     stop("method is only for formula datas")
   }
@@ -115,7 +118,7 @@ branch <- function(data, j) {
   data[data$class == j, -ncol(data), drop=FALSE]
 }
 
-num <- function(data, j) {
+numerator <- function(j, data) {
 
   tmp <- branch(data, j)
   aux <- nrow(tmp) * (colMeans(tmp) - 
@@ -123,22 +126,23 @@ num <- function(data, j) {
   return(aux)
 }
 
-den <- function(data, j) {
+denominator <- function(j, data) {
 
   tmp <- branch(data, j)
   aux <- rowSums((t(tmp) - colMeans(tmp))^2)
   return(aux)
 }
 
-F1 <- function(data) {
+c.F1 <- function(data) {
 
-  aux <- do.call("cbind", 
-    lapply(levels(data$class), function(i) {
-      num(data, i)/den(data, i)
-    })
-  )
+  num <- lapply(levels(data$class), numerator, data)
+  den <- lapply(levels(data$class), denominator, data)
 
-  aux <- max(rowSums(aux, na.rm=TRUE), na.rm=TRUE)
+  aux <- rowSums(do.call("cbind", num)) / 
+    rowSums(do.call("cbind", den))
+
+  aux <- max(aux, na.rm=TRUE)
+  aux <- 1/(aux + 1)
   return(aux)
 }
 
@@ -161,10 +165,11 @@ dvector <- function(data) {
   return(aux)
 }
 
-F1v <- function(data) {
+c.F1v <- function(data) {
   data <- ovo(data)
-  aux <- unlist(lapply(data, dvector))
-  return(mean(aux))
+  aux <- mean(sapply(data, dvector))
+  aux <- 1/(aux + 1)
+  return(aux)
 }
 
 regionOver <- function(data) {
@@ -182,11 +187,11 @@ regionOver <- function(data) {
   return(aux)
 }
 
-F2 <- function(data) {
+c.F2 <- function(data) {
 
   data <- ovo(data)
-  aux <- unlist(lapply(data, regionOver))
-  return(mean(aux))
+  aux <- mean(sapply(data, regionOver))
+  return(aux)
 }
 
 nonOverlap <- function(data) {
@@ -199,10 +204,8 @@ nonOverlap <- function(data) {
   maxmin <- colMax(rbind(colMin(a), colMin(b)))
 
   aux <- do.call("cbind",
-    lapply(1:(ncol(data)-1), 
-      function(i) {
-        data[,i, drop=FALSE] < maxmin[i] | 
-          data[,i, drop=FALSE] > minmax[i]
+    lapply(1:(ncol(data)-1), function(i) {
+        data[,i] < maxmin[i] | data[,i] > minmax[i]
     })
   )
 
@@ -211,25 +214,26 @@ nonOverlap <- function(data) {
   return(aux)
 }
 
-F3 <- function(data) {
+c.F3 <- function(data) {
 
   data <- ovo(data)
   aux <- mapply(function(d) {
     colSums(nonOverlap(d))/nrow(d)
   }, d=data)
 
-  aux <- data.frame(aux)
-  aux <- mean(colMax(aux))
+  aux <- 1 - mean(colMax(aux))
   return(aux)
 }
 
 removing <- function(data) {
 
   repeat {
+
     tmp <- nonOverlap(data)
     col <- which.max(colSums(tmp))
     aux <- rownames(tmp[tmp[,col] != TRUE, , drop=FALSE])
     data <- data[aux,- col, drop=FALSE]
+
     if(nrow(data) == 0 | ncol(data) == 1 |
       length(unique(data$class)) == 1)
         break
@@ -238,12 +242,11 @@ removing <- function(data) {
   return(data)
 }
 
-F4 <- function(data) {
+c.F4 <- function(data) {
 
   data <- ovo(data)
   aux <- mapply(function(d) {
-    n <- removing(d)
-    (nrow(d) - nrow(n))/nrow(d)
+    nrow(removing(d))/nrow(d)
   }, d=data)
 
   aux <- mean(aux)

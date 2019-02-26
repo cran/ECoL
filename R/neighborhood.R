@@ -1,10 +1,9 @@
 #' Measures of neighborhood
 #'
-#' The Neighborhood measures analyze the neighborhoods of the data items and try
-#' to capture class overlapping and the shape of the decision boundary. They 
-#' work over a distance matrix storing the distances between all pairs of data 
-#' points in the dataset. To deal with both symbolic and numerical features, 
-#' we adopt a heterogeneous distance measure named Gower distance.
+#' Classification task. The Neighborhood measures analyze the neighborhoods of 
+#' the data items and try to capture class overlapping and the shape of the 
+#' decision boundary. They work over a distance matrix storing the distances 
+#' between all pairs of data points in the dataset.
 #'
 #' @family complexity-measures
 #' @param x A data.frame contained only the input attributes.
@@ -39,12 +38,12 @@
 #'      are eliminated. T1 is finally defined as the ratio between the number of 
 #'      the remaining hyperspheres and the total number of examples in the 
 #'      dataset.}
-#'    \item{"LSCAvg"}{Local Set Average Cardinality (LSCAvg) is based on Local 
-#'      Set (LS) and defined as the set of points from the dataset whose 
-#'      distance of each example is smaller than the distance from the exemples 
-#'      of the different class. LSCAvg is the average of the LS.}
+#'    \item{"LSC"}{Local Set Average Cardinality (LSC) is based on Local Set 
+#'      (LS) and defined as the set of points from the dataset whose distance of
+#'      each example is smaller than the distance from the exemples of the 
+#'      different class. LSC is the average of the LS.}
 #'  }
-#' @return A list named by the requested class neighborhood measure.
+#' @return A list named by the requested neighborhood measure.
 #'
 #' @references
 #'  Albert Orriols-Puig, Nuria Macia and Tin K Ho. (2010). Documentation for the
@@ -57,6 +56,7 @@
 #'
 #' @examples
 #' ## Extract all neighborhood measures
+#' data(iris)
 #' neighborhood(Species ~ ., iris)
 #' @export
 neighborhood <- function(...) {
@@ -66,6 +66,7 @@ neighborhood <- function(...) {
 #' @rdname neighborhood
 #' @export
 neighborhood.default <- function(x, y, measures="all", ...) {
+
   if(!is.data.frame(x)) {
     stop("data argument must be a data.frame")
   }
@@ -91,18 +92,18 @@ neighborhood.default <- function(x, y, measures="all", ...) {
   measures <- match.arg(measures, ls.neighborhood(), TRUE)
   colnames(x) <- make.names(colnames(x))
 
-  x <- binarize(x)
   data <- data.frame(x, class=y)
   dst <- dist(x)
 
   sapply(measures, function(f) {
-    eval(call(f, dst=dst, data=data))
+    eval(call(paste("c", f, sep="."), dst=dst, data=data))
   })
 }
 
 #' @rdname neighborhood
 #' @export
 neighborhood.formula <- function(formula, data, measures="all", ...) {
+
   if(!inherits(formula, "formula")) {
     stop("method is only for formula datas")
   }
@@ -119,17 +120,10 @@ neighborhood.formula <- function(formula, data, measures="all", ...) {
 }
 
 ls.neighborhood <- function() {
-  c("N1","N2", "N3", "N4", "T1", "LSCAvg")
+  c("N1","N2", "N3", "N4", "T1", "LSC")
 }
 
-knn <- function(dst, data, k=3, i) {
-  tmp <- names(sort(dst[i,])[1:k+1])
-  aux <- data[tmp,]$class
-  names(aux) <- tmp
-  return(aux) 
-}
-
-N1 <- function(dst, data) {
+c.N1 <- function(dst, data) {
 
   g <- igraph::graph.adjacency(dst, mode="undirected", weighted=TRUE)
   tree <- as.matrix(igraph::as_adj(igraph::mst(g)))
@@ -142,7 +136,7 @@ N1 <- function(dst, data) {
 
 intra <- function(dst, data, i) {
   tmp <- rownames(data[data$class == data[i,]$class,])
-  aux <- sort(dst[i, setdiff(tmp, i)])[1]
+  aux <- min(dst[i, setdiff(tmp, i)])
   return(aux)
 }
 
@@ -152,44 +146,38 @@ inter <- function(dst, data, i) {
   return(aux)
 }
 
-N2 <- function(dst, data) {
+c.N2 <- function(dst, data) {
 
-  aux <- sapply(rownames(data), 
-    function(i) {
-      a <- intra(dst, data, i)
-      r <- inter(dst, data, i)
-      return(c(a,r))
+  aux <- sapply(rownames(data), function(i) {
+    c(intra(dst, data, i), inter(dst, data, i))
   })
 
-  aux = sum(aux[1,])/sum(aux[2,])
+  aux <- sum(aux[1,])/sum(aux[2,])
+  aux <- 1 - (1/(aux + 1))
   return(aux)
 }
 
-N3 <- function(dst, data) {
+knn <- function(data, dst, k) {
+  apply(dst, 1, function(i) {
+    tmp <- names(sort(i)[k])
+    data[tmp,]$class
+  })
+}
 
-  aux <- unlist(
-    lapply(rownames(data), 
-      function(i) {
-        knn(dst, data, 1, i) != data[i,]$class
-    })
-  )
-
+c.N3 <- function(dst, data) {
+  aux <- knn(data, dst, 2) != data$class
   return(mean(aux))
 }
 
-N4 <- function(dst, data) {
+c.N4 <- function(dst, data) {
 
-  aux <- rbind(data, generate(data, nrow(data)))
-  vet <- setdiff(rownames(aux), rownames(data))
-  dst <- dist(aux[,-ncol(aux), drop=FALSE])
+  tran <- rbind(data, c.generate(data, nrow(data)))
+  test <- utils::tail(tran, nrow(data))
 
-  aux <- unlist(
-    lapply(vet, function(i) {
-      idx <- which.min(dst[i, rownames(data)])
-      data[names(idx),]$class != aux[i,]$class
-    })
-  )
+  dst <- dist(tran[,-ncol(tran), drop=FALSE])
+  dst <- dst[rownames(test), rownames(data)]
 
+  aux <- knn(data, dst, 1) != test$class
   return(mean(aux))
 }
 
@@ -210,26 +198,19 @@ radios <- function(dst, data, i) {
 
 hyperspher <- function(dst, data) {
 
-  r <- rep(0, nrow(data))
-  names(r) <- rownames(data)
+  aux <- sapply(rownames(data), function(i) {
+    as.numeric(radios(dst, data, i))
+  })
 
-  for(i in names(r)){
-    r[i] <- radios(dst, data, i)
-  }
-
-  return(r)
+  return(aux)
 }
 
 translate <- function(dst, r) {
 
-  aux <- do.call("rbind",
-    lapply(rownames(dst), 
-      function(i) {
-        dst[i,] < r[i]
-    })
-  )
+  aux <- t(sapply(rownames(dst), function(i) {
+    dst[i,] < r[i]
+  }))
 
-  rownames(aux) <- rownames(dst)
   return(aux)
 }
 
@@ -260,19 +241,20 @@ adherence <- function(adh, data) {
   return(h)
 }
 
-T1 <- function(dst, data) {
+c.T1 <- function(dst, data) {
   r <- hyperspher(dst, data)
   aux <- adherence(translate(dst, r), data)
   aux <- length(aux)/nrow(data)
   return(aux)
 }
 
-LSCAvg <- function(dst, data) {
+c.LSC <- function(dst, data) {
   
   r <- sapply(rownames(data), function(i) {
     as.numeric(inter(dst, data, i))
   })
   
   aux <- sum(translate(dst, r))/(nrow(dst)^2)
+  aux <- 1 - aux
   return(aux)
 }

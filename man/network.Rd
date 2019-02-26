@@ -10,7 +10,8 @@ network(...)
 
 \method{network}{default}(x, y, measures = "all", eps = 0.15, ...)
 
-\method{network}{formula}(formula, data, measures = "all", eps = 0.15, ...)
+\method{network}{formula}(formula, data, measures = "all", eps = 0.15,
+  ...)
 }
 \arguments{
 \item{...}{Not used.}
@@ -28,14 +29,14 @@ network(...)
 \item{data}{A data.frame dataset contained the input attributes and class.}
 }
 \value{
-A list named by the requested class network measure.
+A list named by the requested network measure.
 }
 \description{
-The network measures represent the dataset as a graph and extract structural 
-information from it. The transformation between raw data and the graph 
-representation is based on the epsilon-NN algorithm. Next, a post-processing 
-step is applied to the graph, pruning edges between examples of opposite 
-classes.
+Classification task. The network measures represent the dataset as a graph 
+and extract structural information from it. The transformation between raw 
+data and the graph representation is based on the epsilon-NN algorithm. Next,
+a post-processing step is applied to the graph, pruning edges between 
+examples of opposite classes.
 }
 \details{
 The following measures are allowed for this method:
@@ -54,6 +55,7 @@ The following measures are allowed for this method:
 }
 \examples{
 ## Extract all network measures
+data(iris)
 network(Species ~ ., iris)
 }
 \references{
@@ -67,6 +69,9 @@ Gleison Morais and Ronaldo C Prati. (2013). Complex Network Measures for
 }
 \seealso{
 Other complexity-measures: \code{\link{balance}},
-  \code{\link{dimensionality}}, \code{\link{linearity}},
-  \code{\link{neighborhood}}, \code{\link{overlapping}}
+  \code{\link{correlation}}, \code{\link{dimensionality}},
+  \code{\link{linearity.class}},
+  \code{\link{linearity.regr}}, \code{\link{neighborhood}},
+  \code{\link{overlapping}}, \code{\link{smoothness}}
 }
+\concept{complexity-measures}

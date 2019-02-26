@@ -26,13 +26,13 @@ overlapping(...)
 \item{data}{A data.frame dataset contained the input attributes and class.}
 }
 \value{
-A list named by the requested class overlapping measure.
+A list named by the requested overlapping measure.
 }
 \description{
-The overlapping measures evaluate how informative the available features are
-to separate the classes. If there is at least one very discriminative feature
-in the dataset, the problem can be considered simpler than if there is no 
-such an attribute.
+Classification task. The overlapping measures evaluate how informative the 
+available features are to separate the classes. If there is at least one very
+discriminative feature in the dataset, the problem can be considered simpler 
+than if there is no such an attribute.
 }
 \details{
 The following measures are allowed for this method:
@@ -63,6 +63,7 @@ The following measures are allowed for this method:
 }
 \examples{
 ## Extract all overlapping measures
+data(iris)
 overlapping(Species ~ ., iris)
 }
 \references{
@@ -72,6 +73,9 @@ Albert Orriols-Puig, Nuria Macia and Tin K Ho. (2010). Documentation for the
 }
 \seealso{
 Other complexity-measures: \code{\link{balance}},
-  \code{\link{dimensionality}}, \code{\link{linearity}},
-  \code{\link{neighborhood}}, \code{\link{network}}
+  \code{\link{correlation}}, \code{\link{dimensionality}},
+  \code{\link{linearity.class}},
+  \code{\link{linearity.regr}}, \code{\link{neighborhood}},
+  \code{\link{network}}, \code{\link{smoothness}}
 }
+\concept{complexity-measures}

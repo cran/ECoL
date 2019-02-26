@@ -1,9 +1,9 @@
 #' Measures of class balance
 #'
-#' These measures capture the differences in the number of examples per class in
-#' the dataset. When these differences are severe, problems related to 
-#' generalization of the ML classification techniques could happen because of
-#' the imbalance ratio.
+#' Classification task. These measures capture the differences in the number of 
+#' examples per class in the dataset. When these differences are severe, 
+#' problems related to generalization of the ML classification techniques could 
+#' happen because of the imbalance ratio.
 #'
 #' @family complexity-measures
 #' @param x A data.frame contained only the input attributes.
@@ -15,7 +15,7 @@
 #' @details
 #'  The following measures are allowed for this method:
 #'  \describe{
-#'    \item{"C1"}{The entropy of class proportions (C1) measure the imbalance in
+#'    \item{"C1"}{The entropy of class proportions (C1) capture the imbalance in
 #'      a dataset based on the proportions of examples per class.}
 #'    \item{"C2"}{The imbalance ratio (C2) is an index computed for measuring
 #'      class balance. This is a version of the measure that is also suited for 
@@ -34,6 +34,7 @@
 #'
 #' @examples
 #' ## Extract all balance measures
+#' data(iris)
 #' balance(Species ~ ., iris)
 #' @export
 balance <- function(...) {
@@ -43,6 +44,7 @@ balance <- function(...) {
 #' @rdname balance
 #' @export
 balance.default <- function(x, y, measures="all", ...) {
+
   if(!is.data.frame(x)) {
     stop("data argument must be a data.frame")
   }
@@ -64,13 +66,14 @@ balance.default <- function(x, y, measures="all", ...) {
   measures <- match.arg(measures, ls.balance(), TRUE)
 
   sapply(measures, function(f) {
-    eval(call(f, y=y))
+    eval(call(paste("c", f, sep="."), y=y))
   })
 }
 
 #' @rdname balance
 #' @export
 balance.formula <- function(formula, data, measures="all", ...) {
+
   if(!inherits(formula, "formula")) {
     stop("method is only for formula datas")
   }
@@ -90,16 +93,17 @@ ls.balance <- function() {
   c("C1", "C2")
 }
 
-C1 <- function(y) {
+c.C1 <- function(y) {
   c <- -1/log(nlevels(y))
   i <- table(y)/length(y)
   aux <- c*sum(i*log(i))
   return(aux)
 }
 
-C2 <- function(y) {
+c.C2 <- function(y) {
   ii <- summary(y)
   nc <- length(ii)
   aux <- ((nc - 1)/nc) * sum(ii/(length(y) - ii))
+  aux <- 1 - (1/aux)
   return(aux)
 }

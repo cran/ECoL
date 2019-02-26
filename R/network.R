@@ -1,10 +1,10 @@
 #' Measures of network
 #'
-#' The network measures represent the dataset as a graph and extract structural 
-#' information from it. The transformation between raw data and the graph 
-#' representation is based on the epsilon-NN algorithm. Next, a post-processing 
-#' step is applied to the graph, pruning edges between examples of opposite 
-#' classes.
+#' Classification task. The network measures represent the dataset as a graph 
+#' and extract structural information from it. The transformation between raw 
+#' data and the graph representation is based on the epsilon-NN algorithm. Next,
+#' a post-processing step is applied to the graph, pruning edges between 
+#' examples of opposite classes.
 #'
 #' @family complexity-measures
 #' @param x A data.frame contained only the input attributes.
@@ -28,7 +28,7 @@
 #'      has to other nodes, weighted by the number of connections these 
 #'      neighbors have.}
 #'  }
-#' @return A list named by the requested class network measure.
+#' @return A list named by the requested network measure.
 #'
 #' @references
 #'  Gleison Morais and Ronaldo C Prati. (2013). Complex Network Measures for 
@@ -41,6 +41,7 @@
 #'
 #' @examples
 #' ## Extract all network measures
+#' data(iris)
 #' network(Species ~ ., iris)
 #' @export
 network <- function(...) {
@@ -50,6 +51,7 @@ network <- function(...) {
 #' @rdname network
 #' @export
 network.default <- function(x, y, measures="all", eps=0.15, ...) {
+
   if(!is.data.frame(x)) {
     stop("data argument must be a data.frame")
   }
@@ -75,17 +77,18 @@ network.default <- function(x, y, measures="all", eps=0.15, ...) {
   measures <- match.arg(measures, ls.network(), TRUE)
   colnames(x) <- make.names(colnames(x))
 
-  adj <- enn(x, y, eps)
-  graph <- igraph::graph.adjacency(adj, mode="undirected")
+  dst <- enn(x, y, eps*nrow(x))
+  graph <- igraph::graph.adjacency(dst, mode="undirected", weighted=TRUE)
 
   sapply(measures, function(f) {
-    eval(call(f, graph))
+    eval(call(paste("c", f, sep="."), graph))
   })
 }
 
 #' @rdname network
 #' @export
 network.formula <- function(formula, data, measures="all", eps=0.15, ...) {
+
   if(!inherits(formula, "formula")) {
     stop("method is only for formula datas")
   }
@@ -105,28 +108,27 @@ ls.network <- function() {
   c("Density", "ClsCoef", "Hubs")
 }
 
-enn <- function(x, y, eps) {
+enn <- function(x, y, e) {
 
   dst <- dist(x)
-  eps <- eps*nrow(x)
 
   for(i in 1:nrow(x)) {
-    a <- names(sort(dst[i,])[1:eps+1])
+    a <- names(sort(dst[i,])[1:e+1])
     b <- rownames(x[y == y[i],])
-    dst[i,] <- 0; dst[i, intersect(a, b)] <- 1
+    dst[i, setdiff(rownames(x), intersect(a, b))] <- 0
   }
 
   return(dst)
 }
 
-Density <- function(graph) {
-  igraph::graph.density(graph)
+c.Density <- function(graph) {
+  1 - igraph::graph.density(graph)
 }
 
-ClsCoef <- function(graph) {
-  igraph::transitivity(graph, type="global", isolates="zero")
+c.ClsCoef <- function(graph) {
+  1 - igraph::transitivity(graph, type="global", isolates="zero")
 }
 
-Hubs <- function(graph) {
-  mean(igraph::hub.score(graph)$vector)
+c.Hubs <- function(graph) {
+  1 - mean(igraph::hub.score(graph)$vector)
 }
