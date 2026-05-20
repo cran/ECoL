@@ -8,11 +8,9 @@
 \usage{
 correlation(...)
 
-\method{correlation}{default}(x, y, measures = "all",
-  summary = c("mean", "sd"), ...)
+\method{correlation}{default}(x, y, measures = "all", summary = c("mean", "sd"), ...)
 
-\method{correlation}{formula}(formula, data, measures = "all",
-  summary = c("mean", "sd"), ...)
+\method{correlation}{formula}(formula, data, measures = "all", summary = c("mean", "sd"), ...)
 }
 \arguments{
 \item{...}{Not used.}
@@ -42,8 +40,8 @@ the output, this indicates that simpler functions can be fitted to the data.
 \details{
 The following measures are allowed for this method:
  \describe{
-   \item{"C1"}{Maximum feature correlation to the output (C1) calculate the 
-     maximum absolute value of the Spearman correlation between each feature 
+   \item{"C1"}{Feature correlation to the output (C1) calculate the 
+     absolute value of the Spearman correlation between each feature 
      and the outputs.}
    \item{"C2"}{Average feature correlation to the output (C2) computes the 
      average of the Spearman correlations of all features to the output.}
@@ -66,9 +64,13 @@ Ana C Lorena and Aron I Maciel and Pericles B C Miranda and Ivan G Costa and
    regression problems. Machine Learning, 107, 1, 209--246.
 }
 \seealso{
-Other complexity-measures: \code{\link{balance}},
-  \code{\link{dimensionality}}, \code{\link{linearity}},
-  \code{\link{neighborhood}}, \code{\link{network}},
-  \code{\link{overlapping}}, \code{\link{smoothness}}
+Other complexity-measures:
+\code{\link[=balance]{balance()}},
+\code{\link[=dimensionality]{dimensionality()}},
+\code{\link[=featurebased]{featurebased()}},
+\code{\link[=linearity]{linearity()}},
+\code{\link[=neighborhood]{neighborhood()}},
+\code{\link[=network]{network()}},
+\code{\link[=smoothness]{smoothness()}}
 }
 \concept{complexity-measures}

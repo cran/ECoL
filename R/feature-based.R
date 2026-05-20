@@ -1,6 +1,6 @@
-#' Measures of overlapping
+#' Measures of feature-based
 #'
-#' Classification task. The overlapping measures evaluate how informative the 
+#' Classification task. The feature-based measures evaluate how informative the 
 #' available features are to separate the classes. If there is at least one very
 #' discriminative feature in the dataset, the problem can be considered simpler 
 #' than if there is no such an attribute. 
@@ -41,7 +41,7 @@
 #'      features have been considered or no example remains. F4 returns the 
 #'      ratio of examples that have been discriminated.}
 #'  }
-#' @return A list named by the requested overlapping measure.
+#' @return A list named by the requested feature-based measure.
 #'
 #' @references
 #'  Albert Orriols-Puig, Nuria Macia and Tin K Ho. (2010). Documentation for the
@@ -49,17 +49,17 @@
 #'    Ramon Llull.
 #'
 #' @examples
-#' ## Extract all overlapping measures for classification task
+#' ## Extract all feature-based measures for classification task
 #' data(iris)
-#' overlapping(Species ~ ., iris)
+#' featurebased(Species ~ ., iris)
 #' @export
-overlapping <- function(...) {
-  UseMethod("overlapping")
+featurebased <- function(...) {
+  UseMethod("featurebased")
 }
 
-#' @rdname overlapping
+#' @rdname featurebased
 #' @export
-overlapping.default <- function(x, y, measures="all", summary=c("mean", "sd"), 
+featurebased.default <- function(x, y, measures="all", summary=c("mean", "sd"), 
                                 ...) {
 
   if(!is.data.frame(x)) {
@@ -81,10 +81,10 @@ overlapping.default <- function(x, y, measures="all", summary=c("mean", "sd"),
   }
 
   if(measures[1] == "all") {
-    measures <- ls.overlapping()
+    measures <- ls.featurebased()
   }
 
-  measures <- match.arg(measures, ls.overlapping(), TRUE)
+  measures <- match.arg(measures, ls.featurebased(), TRUE)
 
   if (length(summary) == 0) {
     summary <- "return"
@@ -95,14 +95,14 @@ overlapping.default <- function(x, y, measures="all", summary=c("mean", "sd"),
   data <- data.frame(x, class=y)
 
   sapply(measures, function(f) {
-    measure = eval(call(paste("c", f, sep="."), data=data))
-    summarization(measure, summary, f %in% ls.overlapping.multiples(), ...)
+    measure = eval(call(paste("class", f, sep="."), data=data))
+    summarization(measure, summary, f %in% ls.featurebased.multiples(), ...)
   }, simplify=FALSE)
 }
 
-#' @rdname overlapping
+#' @rdname featurebased
 #' @export
-overlapping.formula <- function(formula, data, measures="all", 
+featurebased.formula <- function(formula, data, measures="all", 
                                 summary=c("mean", "sd"), ...) {
 
   if(!inherits(formula, "formula")) {
@@ -116,16 +116,16 @@ overlapping.formula <- function(formula, data, measures="all",
   modFrame <- stats::model.frame(formula, data)
   attr(modFrame, "terms") <- NULL
 
-  overlapping.default(modFrame[, -1, drop=FALSE], modFrame[, 1, drop=FALSE],
+  featurebased.default(modFrame[, -1, drop=FALSE], modFrame[, 1, drop=FALSE],
     measures, summary, ...)
 }
 
-ls.overlapping <- function() {
+ls.featurebased <- function() {
   c("F1", "F1v", "F2", "F3", "F4")
 }
 
-ls.overlapping.multiples <- function() {
-  ls.overlapping()
+ls.featurebased.multiples <- function() {
+  ls.featurebased()
 }
 
 branch <- function(data, j) {
@@ -147,7 +147,7 @@ denominator <- function(j, data) {
   return(aux)
 }
 
-c.F1 <- function(data) {
+class.F1 <- function(data) {
 
   num <- lapply(levels(data$class), numerator, data)
   den <- lapply(levels(data$class), denominator, data)
@@ -179,7 +179,7 @@ dvector <- function(data) {
   return(aux)
 }
 
-c.F1v <- function(data) {
+class.F1v <- function(data) {
   data <- ovo(data)
   #aux <- mean(sapply(data, dvector))
   aux <- sapply(data, dvector)
@@ -202,7 +202,7 @@ regionOver <- function(data) {
   return(aux)
 }
 
-c.F2 <- function(data) {
+class.F2 <- function(data) {
 
   data <- ovo(data)
   #aux <- mean(sapply(data, regionOver))
@@ -230,7 +230,7 @@ nonOverlap <- function(data) {
   return(aux)
 }
 
-c.F3 <- function(data) {
+class.F3 <- function(data) {
 
   data <- ovo(data)
   aux <- mapply(function(d) {
@@ -259,7 +259,7 @@ removing <- function(data) {
   return(data)
 }
 
-c.F4 <- function(data) {
+class.F4 <- function(data) {
 
   data <- ovo(data)
   aux <- mapply(function(d) {

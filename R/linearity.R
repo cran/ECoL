@@ -123,7 +123,7 @@ classification <- function(x, y, measures, summary, ...) {
 
   model <- lapply(data, smo)
   sapply(measures, function(f) {
-    measure = eval(call(paste("c", f, sep="."), model=model, data=data))
+    measure = eval(call(paste("class", f, sep="."), model=model, data=data))
     summarization(measure, summary, f %in% ls.linearity.multiples(), ...)
   }, simplify=FALSE)
 }
@@ -138,7 +138,7 @@ regression <- function(x, y, measures, summary, ...) {
 
   model <- stats::lm(y ~ ., cbind(y=y, x))
   sapply(measures, function(f) {
-    measure = eval(call(paste("r", f, sep="."), m=model, x=x, y=y))
+    measure = eval(call(paste("regr", f, sep="."), m=model, x=x, y=y))
     summarization(measure, summary, f %in% ls.linearity.multiples(), ...)
   }, simplify=FALSE)
 }
@@ -155,7 +155,7 @@ smo <- function(data) {
   e1071::svm(class ~ ., data, scale=TRUE, kernel="linear")
 }
 
-c.L1 <- function(model, data) {
+class.L1 <- function(model, data) {
 
   aux <- mapply(function(m, d) {
     prd <- stats::predict(m, d, decision.values=TRUE)
@@ -164,8 +164,6 @@ c.L1 <- function(model, data) {
     sum(abs(dst))/nrow(d)
   }, m=model, d=data)
 
-  #aux <- 1/(mean(aux) + 1)
-  #aux <- 1 - aux
   aux <- 1 - 1/(aux + 1)
   return(aux)
 }
@@ -174,42 +172,41 @@ error <- function(pred, class) {
   1 - sum(diag(table(class, pred)))/sum(table(class, pred))
 }
 
-c.L2 <- function(model, data) {
+class.L2 <- function(model, data) {
 
   aux <- mapply(function(m, d) {
     prd <- stats::predict(m, d)
     error(prd, d$class)
   }, m=model, d=data)
 
-  #return(mean(aux))
   return(aux)
 }
 
-c.L3 <- function(model, data) {
+class.L3 <- function(model, data) {
 
   aux <- mapply(function(m, d) {
-    tmp <- c.generate(d, nrow(d))
+    tmp <- class.generate(d, nrow(d))
     prd <- stats::predict(m, tmp)
     error(prd, tmp$class)
   }, m=model, d=data)
 
-  #return(mean(aux))
   return(aux)
 }
 
-r.L1 <- function(m, ...) {
-  #mean(abs(m$residuals))
-  abs(m$residuals)
+regr.L1 <- function(m, ...) {
+  aux <- abs(m$residuals)
+  aux <- 1 - 1/(aux + 1)
+  return(aux)
 }
 
-r.L2 <- function(m, ...) {
-  #mean(m$residuals^2)
-  mean(m$residuals^2)
+regr.L2 <- function(m, ...) {
+  m$residuals^2/(m$residuals^2 + 1)
 }
 
-r.L3 <- function(m, x, y) {
-  test <- r.generate(x, y, nrow(x))
+regr.L3 <- function(m, x, y) {
+  test <- regr.generate(x, y, nrow(x))
   pred <- stats::predict.lm(m, test[, -ncol(test), drop=FALSE])
-  #mean((pred - test[, ncol(test)])^2)
-  (pred - test[, ncol(test)])^2
+  aux <- (pred - test[, ncol(test)])^2
+  aux <- aux/(aux + 1)
+  return(aux)
 }
